@@ -8,11 +8,14 @@ public class LandMark : MonoBehaviour
 
     public GameHandler gh;
     public UnityEvent OnCollectEvent;
+    public GameObject LockIfActive;
 
     public uint APDrain = 0;
     public DialogueSet DialogueInfo;
 
-    public GameObject LockIfActive;
+    public DialogueSet AfterCollection;
+
+    [HideInInspector]
     public bool collected = false;
     void Start()
     {
@@ -22,7 +25,7 @@ public class LandMark : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (LockIfActive != null)
+        if (LockIfActive != null || !collected)
         {
             collected = LockIfActive.activeSelf;
         }
@@ -33,12 +36,14 @@ public class LandMark : MonoBehaviour
         gh.CurrentAP -= (int)APDrain;
     }
 
-    public void CallOnCollect()
+    public bool CallOnCollect()
     {
-        if (!collected)
+        if (!collected && gh.CurrentAP >= APDrain)
         {
             collected = true;
             OnCollectEvent.Invoke();
+            return true;
         }
+        return false;
     }
 }

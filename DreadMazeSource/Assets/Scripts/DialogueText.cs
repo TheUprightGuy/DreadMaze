@@ -8,10 +8,11 @@ public class DialogueSet
 {
     public float time = 0.0f;
     public KeyCode keyToEnter = KeyCode.None;
-    
+    public bool ForceSkip = false;
     public string Prompt = "";
     [TextArea]
     public string Description = "";
+
 }
 public class DialogueText : MonoBehaviour
 {
@@ -43,6 +44,12 @@ public class DialogueText : MonoBehaviour
             waitingOnPrompt = false;
         }
 
+        if (inProgress && DialogueQueue[0].ForceSkip)
+        {
+            StopCoroutine(coroutineInProgress);
+            ClearCurrent();
+        }
+
         if (!waitingOnPrompt && inProgress && stepTextDone) //Finish off
         {
             if (DialogueQueue[0].keyToEnter == KeyCode.None)
@@ -65,9 +72,16 @@ public class DialogueText : MonoBehaviour
         }
     }
 
-    string promptText;
+    [HideInInspector]
+    public bool WaitingOnKey => !waitingOnPrompt && inProgress && stepTextDone && DialogueQueue[0].keyToEnter != KeyCode.None;
+
+    bool stepTextDone = true;
     bool waitingOnPrompt = false;
+    string promptText;
     bool inProgress = false;
+
+    private IEnumerator coroutineInProgress;
+
     public void ClearText()
     {
         Desc.text = "";
@@ -82,14 +96,13 @@ public class DialogueText : MonoBehaviour
         ClearText();
         
         stepTextDone = false;
-        StartCoroutine(StepThroughText(_Desc, Desc));
+        coroutineInProgress = StepThroughText(_Desc, Desc);
+        StartCoroutine(coroutineInProgress);
 
         promptText = _Prompt;
         
         waitingOnPrompt = true;
     }
-
-    bool stepTextDone = true;
     IEnumerator StepThroughText(string newText, Text textToChange)
     {
 
@@ -119,11 +132,15 @@ public class DialogueText : MonoBehaviour
 
     void ClearCurrent()
     {
+        waitingOnPrompt = false;
+        stepTextDone = false;
+        inProgress = false;
+
         bg.SetActive(false);
         Desc.gameObject.SetActive(false);
         Prompt.gameObject.SetActive(false);
 
         DialogueQueue.RemoveAt(0);
-        inProgress = false;
+
     }
 }

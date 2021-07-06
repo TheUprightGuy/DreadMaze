@@ -6,7 +6,7 @@ public class LandMarkHandler : MonoBehaviour
 {
     public DialogueText dialogue;
 
-     
+    public DialogueSet ImTooTired;
     // Start is called before the first frame update
     void Start()
     {
@@ -27,24 +27,52 @@ public class LandMarkHandler : MonoBehaviour
                 if (currentLandmark == null)
                 {
                     currentLandmark = hitinfo.transform.GetComponent<LandMark>();
-                    dialogue.DialogueQueue.Add(currentLandmark.DialogueInfo);
+                    if (!dialogue.DialogueQueue.Contains(currentLandmark.DialogueInfo) && !currentLandmark.collected)
+                    {
+                        currentLandmark.DialogueInfo.ForceSkip = false;
+                        dialogue.DialogueQueue.Add(currentLandmark.DialogueInfo);
+                    }
                 }
             }
             else
             {
+                if (currentLandmark != null)
+                {
+                    if (dialogue.DialogueQueue.Contains(currentLandmark.DialogueInfo) )
+                    {
+                        currentLandmark.DialogueInfo.ForceSkip = true;
+                        
+                    }
+                }
                 currentLandmark = null;
             }
         }
         else
         {
+            if (currentLandmark != null)
+            {
+                if (dialogue.DialogueQueue.Contains(currentLandmark.DialogueInfo))
+                {
+                    currentLandmark.DialogueInfo.ForceSkip = true;
+
+                }
+            }
+
             currentLandmark = null;
         }
 
         if (currentLandmark != null)
         {
-            if (Input.GetKeyDown(currentLandmark.DialogueInfo.keyToEnter))
+            if (Input.GetKeyDown(currentLandmark.DialogueInfo.keyToEnter) && dialogue.WaitingOnKey)
             {
-                currentLandmark.CallOnCollect();
+                if(currentLandmark.CallOnCollect())
+                {
+                    dialogue.DialogueQueue.Add(currentLandmark.AfterCollection);
+                }
+                else if (currentLandmark.gh.CurrentAP < currentLandmark.APDrain)
+                {
+                    dialogue.DialogueQueue.Add(ImTooTired);
+                }
             }
         }
         //else if(dialogue.currentUsingObject == null)
